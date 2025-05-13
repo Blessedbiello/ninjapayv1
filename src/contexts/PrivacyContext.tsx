@@ -31,7 +31,7 @@ interface PrivacyContextType {
 }
 
 const defaultPrivacySettings: PrivacySettings = {
-  }
+  
   defaultTransactionPrivacy: false,
   stealthAddressByDefault: false,
   autoShieldLargeAmounts: false,
