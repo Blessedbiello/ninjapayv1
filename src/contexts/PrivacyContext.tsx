@@ -31,6 +31,7 @@ interface PrivacyContextType {
 }
 
 const defaultPrivacySettings: PrivacySettings = {
+  }
   defaultTransactionPrivacy: false,
   stealthAddressByDefault: false,
   autoShieldLargeAmounts: false,
@@ -107,6 +108,7 @@ export const PrivacyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 };
 
 export const usePrivacy = (): PrivacyContextType => {
+    }
   const context = useContext(PrivacyContext);
   if (context === undefined) {
     throw new Error('usePrivacy must be used within a PrivacyProvider');
