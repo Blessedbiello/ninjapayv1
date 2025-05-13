@@ -9,6 +9,7 @@ import { Transactions } from './pages/Transactions';
 import { Settings } from './pages/Settings';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { PrivacyProvider } from './contexts/PrivacyContext';
+import { WalletProvider } from './contexts/WalletContext';
 
 const AppContent: React.FC = () => {
   const { activePage, setActivePage, isSidebarOpen, toggleSidebar } = useApp();
@@ -59,7 +60,9 @@ function App() {
   return (
     <AppProvider>
       <PrivacyProvider>
-        <AppContent />
+        <WalletProvider>
+          <AppContent />
+        </WalletProvider>
       </PrivacyProvider>
     </AppProvider>
   );
