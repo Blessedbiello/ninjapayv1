@@ -7,11 +7,19 @@ import { SegmentedControl } from '../components/base/SegmentedControl';
 import { Badge } from '../components/base/Badge';
 import { Toggle } from '../components/base/Toggle';
 import { usePrivacy } from '../contexts/PrivacyContext';
+import { useWallet } from '../contexts/WalletContext';
+import { sendTransaction } from '../lib/solana';
 
 export const SendReceive: React.FC = () => {
   const { privacyLevel, setPrivacyLevel } = usePrivacy();
+  const { wallet, publicKey, balance, isLoading, error, requestAirdrop } = useWallet();
+  
   const [activeTab, setActiveTab] = useState('send');
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [amount, setAmount] = useState('');
   const [useStealthAddress, setUseStealthAddress] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
   
   const tabOptions = [
     { value: 'send', label: 'Send' },
@@ -23,6 +31,33 @@ export const SendReceive: React.FC = () => {
     { value: 'enhanced', label: 'Enhanced' },
     { value: 'maximum', label: 'Maximum' },
   ];
+
+  const handleSend = async () => {
+    if (!wallet || !recipientAddress || !amount) {
+      setSendError('Please fill in all fields');
+      return;
+    }
+
+    setIsSending(true);
+    setSendError(null);
+
+    try {
+      const signature = await sendTransaction(
+        wallet,
+        recipientAddress,
+        parseFloat(amount),
+        privacyLevel !== 'standard'
+      );
+      console.log('Transaction sent:', signature);
+      setRecipientAddress('');
+      setAmount('');
+    } catch (err) {
+      setSendError('Failed to send transaction');
+      console.error('Error sending transaction:', err);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -36,12 +71,21 @@ export const SendReceive: React.FC = () => {
         <Card className="p-6">
           <h2 className="text-lg font-medium text-text-primary mb-4">Send Payment</h2>
           
+          {error && (
+            <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg">
+              <p className="text-sm text-error">{error}</p>
+            </div>
+          )}
+          
           <div className="space-y-4">
             <TextField
               label="Recipient Address"
               placeholder="Enter Solana address"
+              value={recipientAddress}
+              onChange={(e) => setRecipientAddress(e.target.value)}
               fullWidth
               rightIcon={<QrCode size={18} />}
+              error={sendError}
             />
             
             <div className="grid grid-cols-2 gap-4">
@@ -49,6 +93,8 @@ export const SendReceive: React.FC = () => {
                 label="Amount"
                 placeholder="0.00"
                 type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 fullWidth
               />
               
@@ -58,8 +104,6 @@ export const SendReceive: React.FC = () => {
                 </label>
                 <select className="bg-element text-text-primary rounded-lg border border-element hover:border-secondary focus:border-primary block w-full p-2.5 outline-none transition-colors">
                   <option value="SOL">SOL</option>
-                  <option value="USDC">USDC</option>
-                  <option value="BONK">BONK</option>
                 </select>
               </div>
             </div>
@@ -100,6 +144,9 @@ export const SendReceive: React.FC = () => {
               fullWidth 
               leftIcon={<Shield size={18} />}
               size="lg"
+              onClick={handleSend}
+              isLoading={isSending}
+              disabled={!wallet || isSending || !recipientAddress || !amount}
             >
               Send Privately
             </Button>
@@ -119,61 +166,39 @@ export const SendReceive: React.FC = () => {
           </div>
           
           <div className="flex flex-col items-center mb-6">
-            {useStealthAddress && (
-              <Badge variant="primary" className="mb-2">
-                Stealth Address Active
-              </Badge>
+            {!wallet ? (
+              <Button onClick={() => requestAirdrop()} isLoading={isLoading}>
+                Request Devnet SOL
+              </Button>
+            ) : (
+              <>
+                {useStealthAddress && (
+                  <Badge variant="primary" className="mb-2">
+                    Stealth Address Active
+                  </Badge>
+                )}
+                
+                <div className="bg-white p-4 rounded-lg mb-4">
+                  <div className="w-48 h-48 bg-gray-200 flex items-center justify-center">
+                    <QrCode size={120} className="text-background" />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-element p-2 rounded-lg w-full">
+                  <p className="text-sm text-text-primary truncate flex-1 px-2">
+                    {publicKey}
+                  </p>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    leftIcon={<Copy size={14} />}
+                    onClick={() => navigator.clipboard.writeText(publicKey || '')}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </>
             )}
-            
-            <div className="bg-white p-4 rounded-lg mb-4">
-              <div className="w-48 h-48 bg-gray-200 flex items-center justify-center">
-                <QrCode size={120} className="text-background" />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 bg-element p-2 rounded-lg w-full">
-              <p className="text-sm text-text-primary truncate flex-1 px-2">
-                {useStealthAddress 
-                  ? 'st1q7k2ysqtxzl4rk3upe3vdkzcwn4xwjkgvgkr9...'
-                  : 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe...'
-                }
-              </p>
-              <Button variant="secondary" size="sm" leftIcon={<Copy size={14} />}>
-                Copy
-              </Button>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <TextField
-              label="Request Amount (Optional)"
-              placeholder="0.00"
-              type="number"
-              fullWidth
-            />
-            
-            <TextField
-              label="Note (Optional)"
-              placeholder="What's this payment for?"
-              fullWidth
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <Button 
-                variant="secondary" 
-                fullWidth
-                leftIcon={<ArrowDownRight size={18} />}
-              >
-                New Address
-              </Button>
-              
-              <Button 
-                fullWidth
-                leftIcon={<ArrowUpRight size={18} />}
-              >
-                Share
-              </Button>
-            </div>
           </div>
         </Card>
       )}

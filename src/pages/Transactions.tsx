@@ -1,13 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, ArrowDownRight, Shield, Search, Filter, ExternalLink } from 'lucide-react';
 import { Card } from '../components/base/Card';
 import { SegmentedControl } from '../components/base/SegmentedControl';
 import { Badge } from '../components/base/Badge';
 import { TextField } from '../components/base/TextField';
 import { Button } from '../components/base/Button';
+import { useWallet } from '../contexts/WalletContext';
+import { getTransactionHistory } from '../lib/solana';
+
+interface Transaction {
+  id: string;
+  type: string;
+  is_private: boolean;
+  to_address: string;
+  from_address: string;
+  amount: number;
+  token: string;
+  signature: string;
+  created_at: string;
+}
 
 export const Transactions: React.FC = () => {
+  const { publicKey } = useWallet();
   const [activeFilter, setActiveFilter] = useState('all');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const filterOptions = [
     { value: 'all', label: 'All' },
@@ -15,63 +33,30 @@ export const Transactions: React.FC = () => {
     { value: 'public', label: 'Public' },
   ];
 
-  const transactions = [
-    {
-      id: 'tx1',
-      type: 'send',
-      isPrivate: true,
-      recipient: 'Private Transaction',
-      date: 'Today, 14:32',
-      amount: -1.25,
-      asset: 'SOL',
-      amountUsd: 125.67,
-    },
-    {
-      id: 'tx2',
-      type: 'receive',
-      isPrivate: false,
-      recipient: 'HN7cABqLq46Es1j...',
-      date: 'Today, 10:15',
-      amount: 500,
-      asset: 'USDC',
-      amountUsd: 500,
-    },
-    {
-      id: 'tx3',
-      type: 'shield',
-      isPrivate: true,
-      recipient: 'Shield Transaction',
-      date: 'Yesterday, 18:45',
-      amount: -2.5,
-      asset: 'SOL',
-      amountUsd: 250.34,
-    },
-    {
-      id: 'tx4',
-      type: 'receive',
-      isPrivate: true,
-      recipient: 'Private Transaction',
-      date: 'Yesterday, 12:20',
-      amount: 0.75,
-      asset: 'SOL',
-      amountUsd: 75.21,
-    },
-    {
-      id: 'tx5',
-      type: 'send',
-      isPrivate: false,
-      recipient: 'HN7cABqLq46Es1j...',
-      date: '2 days ago, 09:30',
-      amount: -100,
-      asset: 'USDC',
-      amountUsd: 100,
-    },
-  ];
+  useEffect(() => {
+    const loadTransactions = async () => {
+      if (!publicKey) return;
+      
+      setIsLoading(true);
+      try {
+        const history = await getTransactionHistory(publicKey);
+        setTransactions(history);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load transactions');
+        console.error('Error loading transactions:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTransactions();
+  }, [publicKey]);
 
   const filteredTransactions = activeFilter === 'all' 
     ? transactions 
     : transactions.filter(tx => 
-        activeFilter === 'private' ? tx.isPrivate : !tx.isPrivate
+        activeFilter === 'private' ? tx.is_private : !tx.is_private
       );
 
   const getTransactionIcon = (type: string) => {
@@ -86,6 +71,31 @@ export const Transactions: React.FC = () => {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-error">
+          <p>{error}</p>
+          <Button 
+            variant="secondary" 
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -123,25 +133,34 @@ export const Transactions: React.FC = () => {
                     <h3 className="font-medium text-text-primary">
                       {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
                     </h3>
-                    {tx.isPrivate && (
+                    {tx.is_private && (
                       <Badge variant="primary" size="sm">Private</Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
-                    <p className="text-xs text-text-secondary">{tx.recipient}</p>
-                    {!tx.isPrivate && (
-                      <ExternalLink size={12} className="text-text-secondary" />
+                    <p className="text-xs text-text-secondary">
+                      {tx.type === 'send' ? tx.to_address : tx.from_address}
+                    </p>
+                    {!tx.is_private && (
+                      <a 
+                        href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-text-secondary hover:text-primary"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
                     )}
                   </div>
                 </div>
               </div>
               
               <div className="text-right">
-                <p className={`font-medium ${tx.amount >= 0 ? 'text-success' : 'text-error'}`}>
-                  {tx.amount >= 0 ? '+' : ''}{tx.amount} {tx.asset}
+                <p className={`font-medium ${tx.type === 'receive' ? 'text-success' : 'text-error'}`}>
+                  {tx.type === 'receive' ? '+' : '-'}{tx.amount} {tx.token}
                 </p>
                 <p className="text-xs text-text-secondary">
-                  {tx.date}
+                  {new Date(tx.created_at).toLocaleString()}
                 </p>
               </div>
             </div>
