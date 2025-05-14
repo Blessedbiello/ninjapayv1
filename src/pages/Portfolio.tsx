@@ -4,8 +4,10 @@ import { Card } from '../components/base/Card';
 import { Button } from '../components/base/Button';
 import { Badge } from '../components/base/Badge';
 import { ProgressBar } from '../components/base/ProgressBar';
+import { useApp } from '../contexts/AppContext';
 
 export const Portfolio: React.FC = () => {
+  const { setActivePage } = useApp();
   const [hideBalances, setHideBalances] = React.useState(false);
   
   const assets = [
@@ -37,6 +39,18 @@ export const Portfolio: React.FC = () => {
 
   const totalBalance = assets.reduce((sum, asset) => sum + asset.balanceUsd, 0);
   const shieldedPercentage = 35;
+
+  const handleSendClick = () => {
+    setActivePage('send-receive');
+  };
+
+  const handleReceiveClick = () => {
+    setActivePage('send-receive');
+  };
+
+  const handleShieldClick = () => {
+    setActivePage('privacy');
+  };
 
   return (
     <div className="space-y-6">
@@ -73,9 +87,26 @@ export const Portfolio: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-3 gap-3">
-          <Button leftIcon={<ArrowUpRight size={16} />}>Send</Button>
-          <Button leftIcon={<ArrowDownRight size={16} />} variant="secondary">Receive</Button>
-          <Button leftIcon={<Shield size={16} />} variant="secondary">Shield</Button>
+          <Button 
+            leftIcon={<ArrowUpRight size={16} />}
+            onClick={handleSendClick}
+          >
+            Send
+          </Button>
+          <Button 
+            leftIcon={<ArrowDownRight size={16} />} 
+            variant="secondary"
+            onClick={handleReceiveClick}
+          >
+            Receive
+          </Button>
+          <Button 
+            leftIcon={<Shield size={16} />} 
+            variant="secondary"
+            onClick={handleShieldClick}
+          >
+            Shield
+          </Button>
         </div>
       </Card>
       
