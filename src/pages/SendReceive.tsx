@@ -12,7 +12,7 @@ import { sendTransaction } from '../lib/solana';
 
 export const SendReceive: React.FC = () => {
   const { privacyLevel, setPrivacyLevel } = usePrivacy();
-  const { wallet, publicKey, balance, isLoading, error, requestAirdrop } = useWallet();
+  const { wallet, publicKey, balance, isLoading, error, requestAirdrop, createWallet } = useWallet();
   
   const [activeTab, setActiveTab] = useState('send');
   const [recipientAddress, setRecipientAddress] = useState('');
@@ -20,6 +20,7 @@ export const SendReceive: React.FC = () => {
   const [useStealthAddress, setUseStealthAddress] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   
   const tabOptions = [
     { value: 'send', label: 'Send' },
@@ -56,6 +57,14 @@ export const SendReceive: React.FC = () => {
       console.error('Error sending transaction:', err);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleCopyAddress = async () => {
+    if (publicKey) {
+      await navigator.clipboard.writeText(publicKey);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
     }
   };
 
@@ -154,7 +163,7 @@ export const SendReceive: React.FC = () => {
         </Card>
       ) : (
         <Card className="p-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-medium text-text-primary">Receive Payment</h2>
             <div className="flex items-center gap-2">
               <span className="text-sm text-text-secondary">Stealth Address</span>
@@ -165,41 +174,76 @@ export const SendReceive: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex flex-col items-center mb-6">
-            {!wallet ? (
-              <Button onClick={() => requestAirdrop()} isLoading={isLoading}>
-                Request Devnet SOL
-              </Button>
-            ) : (
-              <>
+          {!wallet ? (
+            <div className="text-center py-8">
+              <p className="text-text-secondary mb-4">Create a wallet to receive payments</p>
+              <div className="space-y-3">
+                <Button 
+                  fullWidth 
+                  onClick={createWallet}
+                  leftIcon={<Shield size={18} />}
+                >
+                  Create New Wallet
+                </Button>
+                <Button 
+                  fullWidth 
+                  variant="secondary"
+                  onClick={() => requestAirdrop()}
+                  isLoading={isLoading}
+                  disabled={!wallet}
+                >
+                  Request Devnet SOL
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col items-center mb-6">
                 {useStealthAddress && (
-                  <Badge variant="primary" className="mb-2">
+                  <Badge variant="primary" className="mb-4">
                     Stealth Address Active
                   </Badge>
                 )}
                 
-                <div className="bg-white p-4 rounded-lg mb-4">
-                  <div className="w-48 h-48 bg-gray-200 flex items-center justify-center">
-                    <QrCode size={120} className="text-background" />
-                  </div>
+                <div className="bg-element p-8 rounded-xl mb-6 w-full max-w-[280px] aspect-square flex items-center justify-center">
+                  <QrCode size={200} className="text-text-primary" />
                 </div>
                 
-                <div className="flex items-center gap-2 bg-element p-2 rounded-lg w-full">
-                  <p className="text-sm text-text-primary truncate flex-1 px-2">
-                    {publicKey}
-                  </p>
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    leftIcon={<Copy size={14} />}
-                    onClick={() => navigator.clipboard.writeText(publicKey || '')}
-                  >
-                    Copy
-                  </Button>
+                <div className="w-full space-y-2">
+                  <p className="text-sm text-text-secondary text-center">Your wallet address</p>
+                  <div className="flex items-center gap-2 bg-element p-3 rounded-lg w-full">
+                    <p className="text-sm text-text-primary truncate flex-1 font-mono">
+                      {publicKey}
+                    </p>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      leftIcon={<Copy size={14} />}
+                      onClick={handleCopyAddress}
+                    >
+                      {copySuccess ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+              
+              <div className="bg-element rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Info size={18} className="text-text-secondary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-text-primary mb-1">
+                      {useStealthAddress 
+                        ? 'Using a stealth address enhances your privacy by generating a unique address for each transaction.'
+                        : 'Enable stealth address to improve your privacy by using unique addresses for each transaction.'}
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      Current balance: {balance.toFixed(4)} SOL
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </Card>
       )}
     </div>
