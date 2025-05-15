@@ -10,6 +10,7 @@ import { Settings } from './pages/Settings';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { PrivacyProvider } from './contexts/PrivacyContext';
 import { WalletProvider } from './contexts/WalletContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 const AppContent: React.FC = () => {
   const { activePage, setActivePage, isSidebarOpen, toggleSidebar } = useApp();
@@ -58,13 +59,15 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <AppProvider>
-      <PrivacyProvider>
-        <WalletProvider>
-          <AppContent />
-        </WalletProvider>
-      </PrivacyProvider>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <PrivacyProvider>
+          <WalletProvider>
+            <AppContent />
+          </WalletProvider>
+        </PrivacyProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 }
 
