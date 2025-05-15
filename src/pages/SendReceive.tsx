@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, QrCode, Copy, Shield, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowUpRight, ArrowDownRight, QrCode, Copy, Shield, Info, LogIn } from 'lucide-react';
 import { Card } from '../components/base/Card';
 import { Button } from '../components/base/Button';
 import { TextField } from '../components/base/TextField';
@@ -8,11 +8,13 @@ import { Badge } from '../components/base/Badge';
 import { Toggle } from '../components/base/Toggle';
 import { usePrivacy } from '../contexts/PrivacyContext';
 import { useWallet } from '../contexts/WalletContext';
+import { useAuth } from '../contexts/AuthContext';
 import { sendTransaction } from '../lib/solana';
 
 export const SendReceive: React.FC = () => {
   const { privacyLevel, setPrivacyLevel } = usePrivacy();
   const { wallet, publicKey, balance, isLoading, error, requestAirdrop, createWallet } = useWallet();
+  const { isAuthenticated, signIn } = useAuth();
   
   const [activeTab, setActiveTab] = useState('send');
   const [recipientAddress, setRecipientAddress] = useState('');
@@ -21,7 +23,25 @@ export const SendReceive: React.FC = () => {
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  
+
+  if (!isAuthenticated) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-8">
+          <h2 className="text-lg font-medium text-text-primary mb-4">Authentication Required</h2>
+          <p className="text-text-secondary mb-6">Please sign in to access wallet features</p>
+          <Button
+            leftIcon={<LogIn size={18} />}
+            onClick={() => signIn()}
+            size="lg"
+          >
+            Sign In
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   const tabOptions = [
     { value: 'send', label: 'Send' },
     { value: 'receive', label: 'Receive' },
