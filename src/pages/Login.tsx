@@ -47,7 +47,7 @@ export const Login: React.FC = () => {
           <div className="text-center lg:text-left">
             <Logo className="mx-auto lg:mx-0 mb-6" />
             <h1 className="text-4xl lg:text-5xl font-bold text-text-primary mb-4">
-              Your Privacy-First<br />Crypto Wallet
+              Your Privacy-First<br />Crypto payment platform
             </h1>
             <p className="text-text-secondary text-lg mb-8 max-w-lg mx-auto lg:mx-0">
               Take control of your financial privacy with NinjaPay. 
