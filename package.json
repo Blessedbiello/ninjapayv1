@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@civic/auth": "^0.2.1",
+    "@civic/auth-web3": "^0.5.9",
     "@solana/web3.js": "^1.91.1",
     "@supabase/supabase-js": "^2.39.7",
     "lucide-react": "^0.344.0",
