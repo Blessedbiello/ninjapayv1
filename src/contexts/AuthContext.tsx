@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CivicAuthProvider, useUser, useSignIn, useSignOut } from '@civic/auth/react';
+import React, { createContext, useContext } from 'react';
+import { CivicAuthProvider as CivicProvider, useUser } from '@civic/auth/react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -12,14 +12,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useUser();
-  const { signIn } = useSignIn();
-  const { signOut } = useSignOut();
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [user]);
+  const { user, signIn, signOut, isLoading } = useUser();
 
   const value = {
     isAuthenticated: !!user,
@@ -44,11 +37,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <CivicAuthProvider>
-      <AuthContext.Provider value={value}>
-        {children}
-      </AuthContext.Provider>
-    </CivicAuthProvider>
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const CivicAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <CivicProvider clientId="YOUR_CLIENT_ID">
+      <AuthProvider>{children}</AuthProvider>
+    </CivicProvider>
   );
 };
 
