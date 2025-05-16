@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const CivicAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <CivicProvider clientId="YOUR_CLIENT_ID">
+    <CivicProvider clientId="c2e7b692-5e6d-4050-88ec-fa7ee44c4fbf">
       <AuthProvider>{children}</AuthProvider>
     </CivicProvider>
   );
