@@ -19,7 +19,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     signIn: async () => {
       try {
-        await signIn();
+        // Use redirect mode to avoid CORS issues
+        await signIn('redirect');
       } catch (error) {
         console.error('Sign in error:', error);
         throw error;
@@ -45,7 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const CivicAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <CivicProvider clientId="c2e7b692-5e6d-4050-88ec-fa7ee44c4fbf">
+    <CivicProvider 
+      clientId="c2e7b692-5e6d-4050-88ec-fa7ee44c4fbf"
+      displayMode="redirect"
+      redirectUrl={window.location.origin + '/login'}
+    >
       <AuthProvider>{children}</AuthProvider>
     </CivicProvider>
   );
@@ -58,4 +63,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
