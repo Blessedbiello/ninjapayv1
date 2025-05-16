@@ -25,17 +25,17 @@ export const Login: React.FC = () => {
     {
       icon: <Lock className="w-8 h-8 text-primary" />,
       title: 'Secure by Design',
-      description: 'Military-grade encryption and secure key management',
+      description: 'High-grade encryption and secure key management',
     },
     {
       icon: <Eye className="w-8 h-8 text-primary" />,
       title: 'Transaction Privacy',
-      description: 'Shield your balances and keep your financial activity private',
+      description: 'Shield your balances and keep your financial activity confidential',
     },
     {
       icon: <Wallet className="w-8 h-8 text-primary" />,
       title: 'Multi-Asset Support',
-      description: 'Manage multiple cryptocurrencies with complete privacy',
+      description: 'Manage assets with complete privacy',
     },
   ];
 
